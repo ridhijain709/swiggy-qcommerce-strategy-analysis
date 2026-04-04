@@ -1,0 +1,6 @@
+lever_id,lever_name,mckinsey_description,mckinsey_benchmark_improvement,current_state_metric,current_state_value,current_state_unit,target_metric,target_value,target_unit,ai_tool_to_automate,difficulty,priority
+L1,Demand Sensing,Replace lagging sales-history forecasts with real-time demand signals from POS and digital sources,20-50% forecast error reduction,Inventory Days,30,days,Inventory Days,15,days,Google Trends + Python agent,Medium,1
+L2,Supply Chain Visibility,End-to-end real-time visibility across all nodes from supplier to shelf,30-50% reduction in stockouts,Stockout Rate,3.2,percent,Stockout Rate,1.5,percent,ERP API + Google Sheets dashboard,Low,2
+L3,Inventory Optimization,AI-driven reorder points replacing static safety stock rules,20-30% inventory reduction,Dead Stock Value,300,crore_inr,Dead Stock Value,50,crore_inr,Inventory Reallocation Agent,Medium,1
+L4,Logistics Optimization,Dynamic routing and carrier selection using real-time traffic and demand data,10-15% logistics cost reduction,Transfer Lead Time,3,days,Transfer Lead Time,2,days,Route optimization algorithm,High,3
+L5,Digital Commerce Integration,Unified online-offline inventory pool removing channel silos,15-25% service level improvement,LCP Page Speed,3.4,seconds,LCP Page Speed,2.0,seconds,AI image compression + CDN,Low,2

@@ -1,0 +1,31 @@
+Hi Vaibhav,
+
+Took your advice — replicated McKinsey Supply Chain 4.0 framework
+on Honasa Consumer (Mamaearth) using Python + Google Trends + Zapier.
+
+[L1] Demand Sensing: ✅ MATCHES
+    Impact modeled: ₹22.5 Cr
+    Gap: McKinsey uses proprietary POS data from 2.7L retailers in real time. Our agent u...
+
+[L2] Supply Chain Visibility: ⚠️ PARTIAL
+    Impact modeled: ₹4.4 Cr
+    Gap: McKinsey deploys IoT sensors + RFID at every distributor point. Our agent relies...
+
+[L3] Inventory Optimisation: ✅ MATCHES
+    Impact modeled: ₹69.1 Cr
+    Gap: McKinsey runs a full minimum-cost flow optimization (OR-Tools/Gurobi). Our agent...
+
+[L4] Logistics Optimisation: ❌ GAP
+    Impact modeled: ₹20.7 Cr
+    Gap: McKinsey integrates live GPS, traffic, and carrier APIs into an ML model. Our ag...
+
+[L5] Digital Commerce Integration: ⚠️ PARTIAL
+    Impact modeled: ₹30.1 Cr
+    Gap: McKinsey runs A/B testing on 200+ page variants with statistical significance. O...
+
+Total impact modeled: ₹147 Cr
+Biggest gap: Lever 4 (Logistics) — no live GPS/carrier data.
+
+GitHub: github.com/ridhijain709/mckinsey-supply-chain-replication
+
+Ridhi

@@ -1,0 +1,144 @@
+{
+  "name": "McKinsey Supply Chain 4.0 — Daily Agent Run",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 8 * * 1-5" }]
+        }
+      },
+      "name": "Trigger: 8 AM Weekdays",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [200, 300],
+      "notes": "Runs every weekday at 8 AM. Change cron to 0 8 * * * for daily including weekends."
+    },
+    {
+      "parameters": {
+        "url": "https://serpapi.com/search?engine=google_trends&q=mamaearth+onion+hair+oil&geo=IN&data_type=TIMESERIES&api_key={{$env.SERPAPI_KEY}}",
+        "method": "GET",
+        "options": {}
+      },
+      "name": "Fetch: Google Trends (Demand Signal)",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 200],
+      "notes": "FREE ALTERNATIVE: Use pytrends Python script node instead if no SerpAPI key. SerpAPI free tier = 100 searches/month."
+    },
+    {
+      "parameters": {
+        "url": "https://sheets.googleapis.com/v4/spreadsheets/{{$env.SHEET_ID}}/values/Inventory!A1:H100",
+        "method": "GET",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api"
+      },
+      "name": "Fetch: Warehouse Inventory (Supply Signal)",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 400],
+      "notes": "Reads live inventory from Google Sheets. Update SHEET_ID with your sheet. Free with Google account."
+    },
+    {
+      "parameters": {
+        "jsCode": "// LEVER 1: DEMAND SENSING\n// Replicates McKinsey Supply Chain 4.0, Lever 1\n// McKinsey benchmark: 20-50% forecast error reduction\n\nconst trends = $input.first().json;\nconst inventory = $('Fetch: Warehouse Inventory (Supply Signal)').first().json;\n\n// Parse trend data (SerpAPI format)\nconst trendData = trends.interest_over_time?.timeline_data || [];\nconst latestTrend = trendData[trendData.length - 1]?.values?.[0]?.value || 0;\n\n// Calibration: Google Trends index → units/day\n// Key insight from McKinsey: you CANNOT use raw index as units.\n// Must calibrate with historical sales data.\nconst CALIBRATION_FACTOR = 0.85; // units/day per 1.0 index (Delhi NCR example)\nconst TREND_MULTIPLIER = latestTrend > 70 ? 1.25 : 1.0; // Mamaearth heuristic\n\nconst forecastUnitsPerDay = CALIBRATION_FACTOR * latestTrend * TREND_MULTIPLIER;\nconst currentInventoryDays = 30; // from company data\nconst targetInventoryDays = 15;  // McKinsey + our target\n\n// McKinsey Lever 1 output\nconst lever1 = {\n  lever: 'L1_DEMAND_SENSING',\n  trend_index: latestTrend,\n  is_spiking: latestTrend > 70,\n  forecast_units_per_day: Math.round(forecastUnitsPerDay * 10) / 10,\n  current_inv_days: currentInventoryDays,\n  target_inv_days: targetInventoryDays,\n  impact_cr: Math.round((currentInventoryDays - targetInventoryDays) * forecastUnitsPerDay * 349 * 0.25 / 365 / 100000) / 100,\n  confidence: latestTrend > 60 ? 'HIGH' : 'MEDIUM',\n  mckinsey_gap: 'McKinsey uses POS data. We use Google Trends (normalized, not units)',\n  timestamp: new Date().toISOString(),\n};\n\nreturn [{ json: lever1 }];",
+        "mode": "runOnceForAllItems"
+      },
+      "name": "Code: Lever 1 — Demand Sensing",
+      "type": "n8n-nodes-base.code",
+      "position": [700, 200],
+      "notes": "Replicates McKinsey Lever 1. Edit CALIBRATION_FACTOR when you get real sales data."
+    },
+    {
+      "parameters": {
+        "jsCode": "// LEVER 3: INVENTORY OPTIMISATION\n// Replicates McKinsey Supply Chain 4.0, Lever 3\n// McKinsey benchmark: 20-30% inventory reduction\n\nconst inventoryData = $('Fetch: Warehouse Inventory (Supply Signal)').first().json;\nconst demand = $('Code: Lever 1 — Demand Sensing').first().json;\n\n// Parse inventory rows from Google Sheets\nconst rows = inventoryData.values || [];\nconst headers = rows[0] || [];\n\nconst warehouses = rows.slice(1).map(row => {\n  const obj = {};\n  headers.forEach((h, i) => obj[h] = row[i]);\n  return obj;\n});\n\n// Compute states for each warehouse (from agent.py logic)\nconst TARGET_DAYS = 15;\nconst SAFETY_DAYS = 2;\n\nconst states = warehouses.map(wh => {\n  const available = parseInt(wh.on_hand_units || 0) - parseInt(wh.blocked_units || 0);\n  // Demand per day: would come from Lever 1 in production\n  // Here: use a simplified proxy (trend index × calibration)\n  const demandPerDay = demand.forecast_units_per_day * 0.3; // 30% of total goes to each warehouse roughly\n  const daysCover = available / Math.max(0.001, demandPerDay);\n  const targetUnits = (TARGET_DAYS + SAFETY_DAYS) * demandPerDay;\n  const excess = Math.max(0, available - targetUnits);\n  const deficit = Math.max(0, targetUnits - available);\n\n  return {\n    warehouse_id: wh.warehouse_id,\n    city: wh.city,\n    available_units: available,\n    days_cover: Math.round(daysCover * 10) / 10,\n    excess_units: Math.round(excess),\n    deficit_units: Math.round(deficit),\n    status: daysCover < 5 ? 'CRITICAL' : excess > 0 ? 'DONOR' : deficit > 0 ? 'RECEIVER' : 'HEALTHY',\n  };\n});\n\n// Simple transfer recommendation (greedy matching)\nconst donors = states.filter(s => s.status === 'DONOR').sort((a, b) => b.excess_units - a.excess_units);\nconst receivers = states.filter(s => s.status === 'CRITICAL' || s.status === 'RECEIVER')\n  .sort((a, b) => b.deficit_units - a.deficit_units);\n\nconst transfers = [];\ndonors.forEach(donor => {\n  receivers.forEach(receiver => {\n    if (donor.excess_units > 0 && receiver.deficit_units > 0) {\n      const ship = Math.min(donor.excess_units, receiver.deficit_units, 500);\n      if (ship >= 50) {\n        transfers.push({\n          from: donor.city,\n          to: receiver.city,\n          units: Math.round(ship / 50) * 50, // MOQ 50\n          priority: receiver.status === 'CRITICAL' ? 'CRITICAL' : 'HIGH',\n          carrying_cost_avoided_rs: Math.round(ship * 349 * 0.25 / 365 * 7),\n          transfer_cost_rs: ship * 12,\n        });\n        donor.excess_units -= ship;\n        receiver.deficit_units -= ship;\n      }\n    }\n  });\n});\n\nconst lever3 = {\n  lever: 'L3_INVENTORY_OPTIMISATION',\n  warehouse_states: states,\n  transfers_recommended: transfers,\n  total_units_moving: transfers.reduce((s, t) => s + t.units, 0),\n  critical_warehouses: states.filter(s => s.status === 'CRITICAL').length,\n  mckinsey_gap: 'McKinsey uses OR-Tools min-cost flow. We use greedy heuristic (~5-10% sub-optimal)',\n  timestamp: new Date().toISOString(),\n};\n\nreturn [{ json: lever3 }];",
+        "mode": "runOnceForAllItems"
+      },
+      "name": "Code: Lever 3 — Inventory Optimisation",
+      "type": "n8n-nodes-base.code",
+      "position": [700, 400],
+      "notes": "Replicates McKinsey Lever 3. This is your core agent logic running in n8n."
+    },
+    {
+      "parameters": {
+        "jsCode": "// COMBINE all levers into one Slack-ready message\nconst lever1 = $('Code: Lever 1 — Demand Sensing').first().json;\nconst lever3 = $('Code: Lever 3 — Inventory Optimisation').first().json;\n\nconst critical = lever3.warehouse_states?.filter(s => s.status === 'CRITICAL') || [];\nconst transfers = lever3.transfers_recommended || [];\nconst totalUnits = lever3.total_units_moving || 0;\n\nlet message = `*🤖 McKINSEY SUPPLY CHAIN AGENT — Daily Run*\\n`;\nmessage += `Date: ${new Date().toLocaleDateString('en-IN')}\\n\\n`;\n\n// Demand signal\nmessage += `*DEMAND SIGNAL (Lever 1)*\\n`;\nmessage += `Trend Index: ${lever1.trend_index}/100 ${lever1.is_spiking ? '📈 SPIKING' : '→ STABLE'}\\n`;\nmessage += `Forecast: ${lever1.forecast_units_per_day} units/day\\n\\n`;\n\n// Inventory status\nmessage += `*WAREHOUSE STATUS (Lever 3)*\\n`;\nif (critical.length > 0) {\n  message += `🔴 CRITICAL: ${critical.map(c => c.city).join(', ')}\\n`;\n}\nif (transfers.length > 0) {\n  message += `\\n*TRANSFER RECOMMENDATIONS:*\\n`;\n  transfers.forEach((t, i) => {\n    message += `[${i+1}] ${t.priority}: ${t.from} → ${t.to} | ${t.units} units\\n`;\n    message += `    Carrying cost avoided: ₹${t.carrying_cost_avoided_rs.toLocaleString()}\\n`;\n  });\n  message += `\\n*TOTAL: ${totalUnits} units moving*\\n`;\n  message += `\\n_Reply APPROVE to execute transfers or SKIP to ignore_`;\n} else {\n  message += `✅ All warehouses within target. No transfers needed.\\n`;\n}\n\nmessage += `\\n\\n_McKinsey Supply Chain 4.0 Replication | Ridhi Jain | github.com/ridhijain709_`;\n\nreturn [{ json: { message, lever1, lever3 } }];",
+        "mode": "runOnceForAllItems"
+      },
+      "name": "Code: Build Slack Message",
+      "type": "n8n-nodes-base.code",
+      "position": [950, 300],
+      "notes": "Formats the McKinsey analysis output into a Slack HITL message."
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "webhookUri": "={{$env.SLACK_WEBHOOK_URL}}",
+        "text": "={{$json.message}}",
+        "otherOptions": {}
+      },
+      "name": "Send: Slack Alert (HITL Approval)",
+      "type": "n8n-nodes-base.slack",
+      "position": [1200, 300],
+      "notes": "Sends to your Slack channel. Go to api.slack.com/apps → Incoming Webhooks → free. Add SLACK_WEBHOOK_URL to n8n environment variables."
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": "={{$env.SHEET_ID}}",
+        "sheetName": "Agent_Log",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{$now}}",
+            "trend_index": "={{$json.lever1.trend_index}}",
+            "is_spiking": "={{$json.lever1.is_spiking}}",
+            "critical_warehouses": "={{$json.lever3.critical_warehouses}}",
+            "units_moving": "={{$json.lever3.total_units_moving}}",
+            "transfers_count": "={{$json.lever3.transfers_recommended.length}}"
+          }
+        }
+      },
+      "name": "Log: Google Sheets (Audit Trail)",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [1200, 450],
+      "notes": "Logs every agent run to Google Sheets. This is your audit trail and KPI tracker."
+    }
+  ],
+  "connections": {
+    "Trigger: 8 AM Weekdays": {
+      "main": [[
+        { "node": "Fetch: Google Trends (Demand Signal)", "type": "main", "index": 0 },
+        { "node": "Fetch: Warehouse Inventory (Supply Signal)", "type": "main", "index": 0 }
+      ]]
+    },
+    "Fetch: Google Trends (Demand Signal)": {
+      "main": [[{ "node": "Code: Lever 1 — Demand Sensing", "type": "main", "index": 0 }]]
+    },
+    "Fetch: Warehouse Inventory (Supply Signal)": {
+      "main": [[{ "node": "Code: Lever 3 — Inventory Optimisation", "type": "main", "index": 0 }]]
+    },
+    "Code: Lever 1 — Demand Sensing": {
+      "main": [[{ "node": "Code: Build Slack Message", "type": "main", "index": 0 }]]
+    },
+    "Code: Lever 3 — Inventory Optimisation": {
+      "main": [[{ "node": "Code: Build Slack Message", "type": "main", "index": 0 }]]
+    },
+    "Code: Build Slack Message": {
+      "main": [[
+        { "node": "Send: Slack Alert (HITL Approval)", "type": "main", "index": 0 },
+        { "node": "Log: Google Sheets (Audit Trail)", "type": "main", "index": 0 }
+      ]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "_meta": {
+    "description": "McKinsey Supply Chain 4.0 Replication — Daily n8n Workflow",
+    "author": "Ridhi Jain",
+    "github": "github.com/ridhijain709",
+    "based_on": "McKinsey 'Supply Chain 4.0 in Consumer Goods' (2018)",
+    "free_tools": ["n8n (self-hosted free)", "Google Sheets API", "Slack Webhooks", "Google Trends"],
+    "setup_steps": [
+      "1. Import this JSON into n8n (Workflows → Import)",
+      "2. Add environment variables: SLACK_WEBHOOK_URL, SHEET_ID",
+      "3. Create Google Sheets credential in n8n (OAuth2)",
+      "4. Test with manual trigger first",
+      "5. Activate workflow for daily 8 AM run"
+    ]
+  }
+}
