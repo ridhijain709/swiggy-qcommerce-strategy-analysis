@@ -1,0 +1,28 @@
+McKINSEY SUPPLY CHAIN 4.0 REPLICATION ANALYSIS
+Company: Nykaa (FSN E-Commerce)
+Analysis Date: 2026-04-05 00:53:50
+
+[L1] Demand Sensing: MATCHES
+    Impact modeled: Rs 13.5 Cr
+    Gap: McKinsey uses proprietary POS data from 2.7L retailers in real time. Our agent u...
+
+[L2] Supply Chain Visibility: PARTIAL
+    Impact modeled: Rs 2.9 Cr
+    Gap: McKinsey deploys IoT sensors + RFID at every distributor point. Our agent relies...
+
+[L3] Inventory Optimisation: MATCHES
+    Impact modeled: Rs 35.9 Cr
+    Gap: McKinsey runs a full minimum-cost flow optimization (OR-Tools/Gurobi). Our agent...
+
+[L4] Logistics Optimisation: GAP
+    Impact modeled: Rs 22.7 Cr
+    Gap: McKinsey integrates live GPS, traffic, and carrier APIs into an ML model. Our ag...
+
+[L5] Digital Commerce Integration: PARTIAL
+    Impact modeled: Rs 49.1 Cr
+    Gap: McKinsey runs A/B testing on 200+ page variants with statistical significance. O...
+
+Total impact modeled: Rs 124 Cr
+Biggest gap: Lever 4 (Logistics) — no live GPS/carrier data.
+
+GitHub: github.com/ridhijain709/mckinsey-supply-chain-replication

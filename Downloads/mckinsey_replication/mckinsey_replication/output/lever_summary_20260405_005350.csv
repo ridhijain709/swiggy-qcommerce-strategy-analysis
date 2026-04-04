@@ -1,0 +1,6 @@
+lever_id,lever_name,current_metric,current_value,target_value,impact_cr,impact_confidence,ai_tool,build_time_days,build_cost_rs
+L1,Demand Sensing,Inventory Days,45.0,31.5,13.5,HIGH,Google Trends API (pytrends) + Python calibration model,14,0
+L2,Supply Chain Visibility,Estimated Stockout Rate,3.2,1.9,2.94,MEDIUM,Google Sheets Control Plane + Zapier 3-pipe automation,7,0
+L3,Inventory Optimisation,Dead Stock Value,180.0,50.0,35.93,HIGH,Inventory Reallocation Agent (Python heuristic transshipment),14,0
+L4,Logistics Optimisation,Estimated Logistics Cost,189.0,166.3,22.68,LOW,Rule-based route matrix (warehouse_routes.csv) — partial replication,21,0
+L5,Digital Commerce Integration,LCP (Largest Contentful Paint),3.8,2.0,49.14,MEDIUM,PageSpeed Insights API + AI image compression recommendation,3,0

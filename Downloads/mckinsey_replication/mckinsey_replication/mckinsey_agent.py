@@ -462,7 +462,7 @@ def print_comparison_table(report: ReplicationReport):
     print("\n" + "═" * 80)
     print("  McKINSEY vs AI AGENT — LEVER-BY-LEVER COMPARISON")
     print("  " + "─" * 76)
-    print("  This is what Vaibhav meant: 'See how it varies from the original'")
+    print("  Comparing our replication methodology against McKinsey's framework")
     print("═" * 80)
 
     rows = []
@@ -539,72 +539,6 @@ def print_full_report(report: ReplicationReport):
     print("─" * 80)
 
 
-def print_vaibhav_share_summary(report: ReplicationReport):
-    """What to send to Vaibhav."""
-    c = report.company
-    print("\n" + "═" * 80)
-    print("  WHAT TO SHARE WITH VAIBHAV — COPY THIS INTO YOUR MESSAGE")
-    print("═" * 80)
-    print(f"""
-Hi Vaibhav,
-
-I took your advice and replicated a McKinsey Supply Chain 4.0 framework
-(their 2018 consumer goods case study) using Python + Google Trends + Zapier.
-
-Here's what I found when I applied their 5-lever methodology to
-{c.name} using Q3 FY26 public data:
-
-LEVER 1 (Demand Sensing):
-  McKinsey: proprietary POS data → 20-50% forecast error reduction
-  My agent: Google Trends API + calibration model
-  Match quality: ✅ HIGH — same mathematical output, different data source
-  Gap: McKinsey has unit-level POS data. I use normalized search index.
-
-LEVER 2 (Supply Visibility):
-  McKinsey: IoT + RFID control tower
-  My agent: Google Sheets + Zapier 3-pipe dashboard
-  Match quality: ⚠️ MEDIUM — same structure, 24hr lag vs real-time
-  Gap: No IoT integration.
-
-LEVER 3 (Inventory Optimisation):
-  McKinsey: OR-Tools minimum-cost flow optimizer
-  My agent: Python greedy transshipment heuristic
-  Match quality: ✅ HIGH — same result, sub-optimal by ~5-10%
-  Gap: My solver doesn't handle complex multi-period constraints.
-
-LEVER 4 (Logistics):
-  McKinsey: Live GPS + ML carrier selection
-  My agent: Static lead-time matrix
-  Match quality: ❌ LOW — this is my biggest gap
-  Gap: Need Google Maps Distance Matrix API.
-
-LEVER 5 (Digital):
-  McKinsey: A/B testing across 200+ variants
-  My agent: Single PageSpeed audit + revenue leak calculation
-  Match quality: ⚠️ MEDIUM — diagnostic matches, no A/B test
-
-Total impact modeled: ₹{report.total_impact_cr:.0f} Cr
-My build time: {report.our_build_days} days | Cost: ₹0
-
-Honest gaps I found:
-1. I can't replicate McKinsey's logistics lever without live data
-2. My demand calibration needs historical sales data to be production-grade
-3. I have no A/B testing capability
-
-Questions for you:
-→ Does the gap analysis look right to you?
-→ Is the logistics lever typically the hardest to automate in real consulting?
-→ What would a junior analyst at Tiger Analytics be expected to add
-   that my agent can't do?
-
-GitHub: github.com/ridhijain709/mckinsey-supply-chain-replication
-
-Thanks again for the push in the right direction.
-Ridhi
-""")
-    print("═" * 80)
-
-
 # ════════════════════════════════════════════════════════════════════════════
 # OUTPUT SAVERS
 # ════════════════════════════════════════════════════════════════════════════
@@ -624,12 +558,12 @@ def save_report(report: ReplicationReport, output_dir: str = "output"):
         "our_build_days": report.our_build_days,
         "levers": [asdict(l) for l in report.levers],
     }
-    with open(json_path, "w") as f:
+    with open(json_path, "w", encoding="utf-8") as f:
         json.dump(report_dict, f, indent=2)
 
     # CSV — lever summary
     csv_path = os.path.join(output_dir, f"lever_summary_{ts}.csv")
-    with open(csv_path, "w", newline="") as f:
+    with open(csv_path, "w", newline="", encoding="utf-8") as f:
         fields = ["lever_id","lever_name","current_metric","current_value",
                   "target_value","impact_cr","impact_confidence","ai_tool",
                   "build_time_days","build_cost_rs"]
@@ -638,26 +572,25 @@ def save_report(report: ReplicationReport, output_dir: str = "output"):
         for l in report.levers:
             w.writerow({k: getattr(l, k) for k in fields})
 
-    # Vaibhav message text
-    msg_path = os.path.join(output_dir, f"vaibhav_message_{ts}.txt")
-    with open(msg_path, "w") as f:
+    # Analysis summary text
+    msg_path = os.path.join(output_dir, f"analysis_summary_{ts}.txt")
+    with open(msg_path, "w", encoding="utf-8") as f:
         c = report.company
-        f.write(f"Hi Vaibhav,\n\n")
-        f.write(f"Took your advice — replicated McKinsey Supply Chain 4.0 framework\n")
-        f.write(f"on {c.name} using Python + Google Trends + Zapier.\n\n")
+        f.write(f"McKINSEY SUPPLY CHAIN 4.0 REPLICATION ANALYSIS\n")
+        f.write(f"Company: {c.name}\n")
+        f.write(f"Analysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
         for lever in report.levers:
-            conf = {"HIGH": "✅ MATCHES", "MEDIUM": "⚠️ PARTIAL", "LOW": "❌ GAP"}[lever.impact_confidence]
+            conf = {"HIGH": "MATCHES", "MEDIUM": "PARTIAL", "LOW": "GAP"}[lever.impact_confidence]
             f.write(f"[{lever.lever_id}] {lever.lever_name}: {conf}\n")
-            f.write(f"    Impact modeled: ₹{lever.impact_cr:.1f} Cr\n")
+            f.write(f"    Impact modeled: Rs {lever.impact_cr:.1f} Cr\n")
             f.write(f"    Gap: {lever.mckinsey_gap[:80]}...\n\n")
-        f.write(f"Total impact modeled: ₹{report.total_impact_cr:.0f} Cr\n")
+        f.write(f"Total impact modeled: Rs {report.total_impact_cr:.0f} Cr\n")
         f.write(f"Biggest gap: Lever 4 (Logistics) — no live GPS/carrier data.\n\n")
         f.write(f"GitHub: github.com/ridhijain709/mckinsey-supply-chain-replication\n")
-        f.write(f"\nRidhi\n")
 
-    print(f"\n  💾 JSON report   → {json_path}")
-    print(f"  💾 Lever CSV     → {csv_path}")
-    print(f"  💾 Vaibhav msg   → {msg_path}")
+    print(f"\n  JSON report   → {json_path}")
+    print(f"  Lever CSV     → {csv_path}")
+    print(f"  Message       → {msg_path}")
 
     return json_path, csv_path, msg_path
 
@@ -722,14 +655,12 @@ Examples:
   python mckinsey_agent.py                         # Honasa/Mamaearth
   python mckinsey_agent.py --company Nykaa         # Different company
   python mckinsey_agent.py --compare               # Show McKinsey vs AI diff
-  python mckinsey_agent.py --vaibhav               # Print Vaibhav message
         """
     )
     parser.add_argument("--company",  default="Honasa Consumer", help="Company to analyze")
     parser.add_argument("--data-dir", default="data",            help="Path to data files")
     parser.add_argument("--out-dir",  default="output",          help="Output directory")
     parser.add_argument("--compare",  action="store_true",       help="Show detailed comparison")
-    parser.add_argument("--vaibhav",  action="store_true",       help="Print Vaibhav-ready message")
     args = parser.parse_args()
 
     print("\n╔══════════════════════════════════════════════════════════════╗")
@@ -748,9 +679,6 @@ Examples:
 
     if args.compare or True:  # always show comparison
         print_comparison_table(report)
-
-    if args.vaibhav:
-        print_vaibhav_share_summary(report)
 
     save_report(report, args.out_dir)
     print("\n✅ McKinsey replication complete.\n")

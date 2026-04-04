@@ -1,0 +1,5 @@
+Hi Vaibhav,
+
+Took your advice — replicated McKinsey Supply Chain 4.0 framework
+on Honasa Consumer (Mamaearth) using Python + Google Trends + Zapier.
+
