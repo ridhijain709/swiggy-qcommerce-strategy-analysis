@@ -168,7 +168,7 @@ This is a real technical conversation, not "AI-generated content."
 ## AI Output Quality Checks (Before Sharing)
 
 - Verify every numeric claim against `output/mckinsey_replication_*.json` and source CSVs.
-- Keep all assumptions explicit (for example: proxy data, static lead times, heuristic optimization).
+- Keep all assumptions explicit (e.g., proxy data, static lead times, heuristic optimization).
 - Label confidence levels clearly (HIGH / MEDIUM / LOW) in stakeholder summaries.
 - Remove or rewrite any statement that implies parity with proprietary McKinsey datasets.
 
@@ -176,7 +176,7 @@ This is a real technical conversation, not "AI-generated content."
 
 ## Publishing Recommendation
 
-For non-technical audiences, publish the narrative version on Medium/Substack and link this repository as technical backup.
+For non-technical audiences, publish a narrative version on Medium/Substack (business problem, key insights, and decisions) and link this repository as technical backup for methods and reproducibility.
 
 ---
 
