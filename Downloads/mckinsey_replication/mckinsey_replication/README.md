@@ -161,7 +161,10 @@ The message shows:
 - Which levers you replicated successfully (L1, L3)
 - Where you failed (L4 logistics — biggest gap)  
 - What you need to fix it (Google Maps Distance Matrix API)
-- 3 specific follow-up questions for decision-makers
+- Three follow-up questions for decision-makers:
+  1. Which first-party data sources can be unlocked first to improve model confidence?
+  2. Which lever should be piloted in the next 30 days based on effort vs impact?
+  3. What KPI target will define pilot success before broader rollout?
 
 This is a real technical conversation, not "AI-generated content."
 
