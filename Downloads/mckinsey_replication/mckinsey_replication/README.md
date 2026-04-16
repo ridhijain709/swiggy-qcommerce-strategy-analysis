@@ -5,6 +5,8 @@ Built by **Ridhi Jain** as part of an independent AI consulting portfolio.
 
 > *"Take a BCG/Bain/McKinsey case study, replicate it with AI automation, and see how it varies from the original."*
 
+> **Scope note:** Public signals (including Google Trends) are used as directional proxies and are not equivalent to proprietary retailer-level transaction datasets.
+
 ---
 
 ## The McKinsey Case Study
