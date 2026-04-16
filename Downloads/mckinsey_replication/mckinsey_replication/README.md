@@ -3,7 +3,7 @@
 **Replicating a McKinsey consumer goods supply chain engagement using Python + n8n + Google Trends.**  
 Built by **Ridhi Jain** as part of an independent AI consulting portfolio.
 
-> *"Take a BCG/Bain/McKinsey case study, replicate it with AI automation, and see how it varies from the original."*
+Assignment prompt: Take a BCG/Bain/McKinsey case study, replicate it with AI automation, and analyze how results vary from the original.
 
 > **Scope note:** Public signals (including Google Trends) are used as directional proxies and are not equivalent to proprietary retailer-level transaction datasets.
 
@@ -106,7 +106,7 @@ Import `n8n/workflow.json` into your n8n instance.
 
 ---
 
-## How This Project Follows the Assignment
+## Project Methodology
 
 **Step 1: "Read blogs on AI for consultation"**  
 → Read McKinsey's actual case study at the URL above. That IS the consultation blog.
