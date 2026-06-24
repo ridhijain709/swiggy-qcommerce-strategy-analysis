@@ -66,7 +66,7 @@ python mckinsey_agent.py --compare
 
 **Sample output:**
 ```
-LEVER 3: INVENTORY OPTIMISATION  🟢
+LEVER 3: INVENTORY OPTIMISATION 🟢
   Current:  300.0 ₹ Crore dead stock
   Target:   50.0 ₹ Crore
   Impact:   ₹69.10 Cr  |  Confidence: HIGH
@@ -90,9 +90,9 @@ Import `n8n/workflow.json` into your n8n instance.
     ↓
 [Lever 1: Demand Sensing code node]
     ↓
-[Lever 3: Inventory Optimisation code node]
+Lever 3: Inventory Optimisation code node]
     ↓
-[Build Slack message]
+Build Slack message]
     ↓
 [Slack HITL alert] + [Google Sheets log]
 ```
