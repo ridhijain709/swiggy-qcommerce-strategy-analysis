@@ -3,8 +3,9 @@
 **Replicating a McKinsey consumer goods supply chain engagement using Python + n8n + Google Trends.**  
 Built by **Ridhi Jain** as part of an independent AI consulting portfolio.
 
-> *"Take a BCG/Bain/McKinsey case study, replicate it with AI automation, and see how it varies from the original."*  
-> — Vaibhav Mehra, ex-Swiggy CEO's Office, Tiger Analytics
+Assignment prompt: Take a BCG/Bain/McKinsey case study, replicate it with AI automation, and analyze how results vary from the original.
+
+> **Scope note:** Public signals (including Google Trends) are used as directional proxies and are not equivalent to proprietary retailer-level transaction datasets.
 
 ---
 
@@ -42,6 +43,8 @@ McKinsey Supply Chain 4.0
 | L4 Logistics | Live GPS + ML carrier selection | Static lead-time table | ❌ LOW | No live logistics data |
 | L5 Digital | A/B testing 200+ variants | PageSpeed audit only | ⚠️ MEDIUM | No A/B test capability |
 
+**Important data note:** Google Trends and other public signals are **directional proxies**, not equivalent to proprietary retailer-level transaction data used in full consulting engagements.
+
 ---
 
 ## Quick Start
@@ -56,9 +59,6 @@ python mckinsey_agent.py
 
 # Run on a different company
 python mckinsey_agent.py --company Nykaa
-
-# Print Vaibhav-ready message
-python mckinsey_agent.py --vaibhav
 
 # Show detailed McKinsey vs AI comparison
 python mckinsey_agent.py --compare
@@ -106,7 +106,7 @@ Build Slack message]
 
 ---
 
-## How This Follows Vaibhav's Instructions
+## Project Methodology
 
 **Step 1: "Read blogs on AI for consultation"**  
 → Read McKinsey's actual case study at the URL above. That IS the consultation blog.
@@ -146,24 +146,42 @@ mckinsey-supply-chain-replication/
 ├── output/                     ← Auto-generated on first run
 │   ├── mckinsey_replication_*.json
 │   ├── lever_summary_*.csv
-│   └── vaibhav_message_*.txt   ← Copy-paste to send to Vaibhav
+│   └── analysis_summary_*.txt  ← Stakeholder-ready summary
 │
 └── README.md
 ```
 
 ---
 
-## What to Send Vaibhav
+## How to Share Results with Stakeholders
 
-Run `python mckinsey_agent.py --vaibhav` → copy the output → send it.
+Run `python mckinsey_agent.py` and share `output/analysis_summary_*.txt`.
 
 The message shows:
 - Which levers you replicated successfully (L1, L3)
 - Where you failed (L4 logistics — biggest gap)  
 - What you need to fix it (Google Maps Distance Matrix API)
-- 3 specific questions asking for his expert input
+- Three follow-up questions for decision-makers:
+  1. Which first-party data sources can be unlocked first to improve model confidence?
+  2. Which lever should be piloted in the next 30 days based on effort vs impact?
+  3. What KPI target will define pilot success before broader rollout?
 
 This is a real technical conversation, not "AI-generated content."
+
+---
+
+## AI Output Quality Checks (Before Sharing)
+
+- Verify every numeric claim against `output/mckinsey_replication_*.json` and source CSVs.
+- Keep all assumptions explicit (e.g., proxy data, static lead times, heuristic optimization).
+- Label confidence levels clearly (HIGH / MEDIUM / LOW) in stakeholder summaries.
+- Remove or rewrite any statement that implies parity with proprietary McKinsey datasets.
+
+---
+
+## Publishing Recommendation
+
+For non-technical audiences, publish a narrative version on Medium/Substack (business problem, key insights, and decisions) and link this repository as technical backup for methods and reproducibility.
 
 ---
 
